@@ -7,5 +7,5 @@ defineComponent({
 </script>
 
 <template lang="pug">
-router-view
+router-view(:key="$route.fullPath")
 </template>

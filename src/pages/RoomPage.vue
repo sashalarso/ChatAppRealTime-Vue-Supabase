@@ -137,6 +137,18 @@ async function get_other_profile(id) {
       last_seen.value.getHours() +
       ":" +
       last_seen.value.getMinutes();
+  } else {
+    last_seen_render.value =
+      "en ligne le " +
+      last_seen.value.getDate() +
+      "/" +
+      (last_seen.value.getMonth() + 1) +
+      "/" +
+      last_seen.value.getFullYear() +
+      " à " +
+      last_seen.value.getHours() +
+      ":" +
+      last_seen.value.getMinutes();
   }
 
   const test = await supabase
@@ -158,43 +170,75 @@ function format_date(date) {
       "en ligne aujourd'hui à " + date.getHours() + ":" + date.getMinutes();
   }
 }
+const prompt = ref(false);
+const new_conv = ref("");
+const first_message = ref("");
+async function create_conv(username, message) {
+  const resp = await supabase
+    .from("profiles")
+    .select("email")
+    .match({ username: username });
+  const email = resp.data[0].email;
+  const { data } = await supabase
+    .from("rooms")
+    .insert({ members: [email, user._rawValue.email] });
+  const new_id = data[0].id;
+  const test = await supabase
+    .from("messages")
+    .insert({ message: message, sender: user._rawValue.email, room: new_id });
+  router.push(`/room/${new_id}`);
+}
+function isImage(url) {
+  return /\.(jpg|jpeg|png|webp|avif|gif|svg)$/.test(url);
+}
 </script>
 
 <template lang="pug">
-body(style="overflow-y: hidden;")
-  q-layout(style="min-height: 400px;")
+div(style="background-color: white;")
+  body(style="overflow-y: hidden; height: 100%; ")
+    q-layout(style="min-height: 800px;").q-m-a-md
 
-    div(s class="row")
-      div(style="background-color: red; " class="col-4")
-        div(style="background-color: aqua; height: 56px;" class="row")
-          div(class="col")
-            q-avatar
-              img(:src="pp")
-          div(class="col" style="text-align: right;")
-            q-btn(icon="add")
-        q-scroll-area(style="height: 100%; max-width: 600px;")
-          div(style="").text-center
+      div(s class="row justify-center")
+        div(style="background-color: red; " class="col-3")
+          div(style="background-color: gainsboro; height: 56px; width: auto;" class="row")
+            div(class="col")
+              q-avatar(style="margin-left: 5px; margin-top: 3px;")
+                img(:src="pp")
+            div(class="col" style="text-align: right;")
+              q-btn(rounded icon="message" @click="prompt=true" style="margin-right: 20px; margin-top: 8px;")
+              q-dialog(v-model="prompt" )
+                q-card
+                  q-card-section Entrez le nom d'utilisateur du destinataire
+                  q-card-section
+                    q-input(dense ,@keyup-enter="prompt=false",v-model="new_conv")
+                  q-card-section Votre message
+                  q-card-section
+                    q-input(dense, v-model="first_message" )
+                  q-card-actions(align="right")
+                    q-btn(flat,label="Annuler",v-close-popup)
+                    q-btn(flat,label="Envoyer",v-close-popup,@click="create_conv(new_conv,first_message)")
+          q-scroll-area(style="height: 100%; max-width: 100%; width: auto;")
             RoomsUser
 
-      div(class="col-8")
-        q-scroll-area(style="height: 600px; max-width: 100%; " ref="test" )
-          div(class="bg-brown-2  ",style="margin: 0 auto ;  background-color: aqua; min-height: 540px; ").q-px-xl
-            div(style="height: 70px;")
-            p(v-for="message in messages")
-              p(v-if="me==message.sender").text-right
-                q-chat-message(:text="[message.message]",sent,:stamp="message.created_at")
-              p(v-if="me!=message.sender",color="light-green-10")
-                q-chat-message(:text="[message.message]",:stamp="message.created_at")
-          div(class="row justify-center")
-            q-input(id="my_input" style=" width: 800px;" v-model="my_message" placeholder="Taper un message" rounded outlined  @keyup.enter="send_message(my_message)" )
-            q-btn(rounded icon="send" @click="send_message(my_message)" id="bottom")
-          q-page-sticky(position="top" style="" )
-            div(style=" background-color:aquamarine; width: 1100px; ")
-              q-item(style=" margin-left: 10px;")
-                q-item-section(avatar)
-                  q-avatar
-                    img(:src="other_pp")
-                q-item-section
-                  q-item-label {{ other_username }}
-                  q-item-label {{ last_seen_render }}
+        div(class="col-7" style="")
+          q-scroll-area(style="height: 800px; max-width: 100%; " ref="test" )
+            div(class="bg-brown-2  ",style="  background-color: aqua; min-height: 650px; ").q-px-xl
+              div(style="height: 70px;")
+              p(v-for="message in messages" class="row")
+                p(v-if="me==message.sender" class="col")
+                  q-chat-message(:text="[message.message]",sent,:stamp="message.created_at")
+                p(v-if="me!=message.sender",color="light-green-10" class=".col")
+                  q-chat-message(:text="[message.message]",:stamp="message.created_at")
+            div(class="row justify-center" style="")
+              q-input(id="my_input" style=" width: 800px;" v-model="my_message" placeholder="Taper un message" rounded outlined  @keyup.enter="send_message(my_message)" )
+              q-btn(rounded icon="send" @click="send_message(my_message)" id="bottom")
+            q-page-sticky(position="top" style="" )
+              div(style=" background-color:aquamarine; width: 100%; ")
+                q-item(style=" margin-left: 10px;")
+                  q-item-section(avatar)
+                    q-avatar
+                      img(:src="other_pp")
+                  q-item-section
+                    q-item-label {{ other_username }}
+                    q-item-label {{ last_seen_render }}
 </template>

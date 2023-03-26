@@ -10,7 +10,7 @@ defineComponent({ name: "MainLayout" });
 q-layout(view="hHh lpR fFf")
   q-header.bg-purple-9(elevated)
     q-toolbar.q-pa-lg.text-h4.justify-between.items-center
-      TechStackLinks
+
       span.text-h6.text-weight-medium.flex.flex-center
         span.text-yellow-2 The Counter-Adder
         span.q-mx-sm.row
