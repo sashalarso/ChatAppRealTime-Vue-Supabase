@@ -1,15 +1,17 @@
-# develop stage
-FROM node:13.14-alpine as develop-stage
+# Utilisez une image de Node.js comme base
+FROM node:latest
+
+# Créez un répertoire de travail dans l'image
 WORKDIR /app
-COPY package*.json ./
-RUN yarn global add @quasar/cli
+
+# Copiez tous les fichiers de votre application dans l'image
 COPY . .
-# build stage
-FROM develop-stage as build-stage
-RUN yarn
-RUN quasar build
-# production stage
-FROM nginx:1.17.5-alpine as production-stage
-COPY --from=build-stage /app/dist/spa /usr/share/nginx/html
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+
+# Installez les dépendances de votre application
+RUN npm install
+
+# Exposez le port 8080 sur lequel votre application sera accessible
+EXPOSE 9000
+
+# Lancez votre application en mode développement en utilisant la commande "quasar dev"
+CMD ["npm", "run", "dev"]
